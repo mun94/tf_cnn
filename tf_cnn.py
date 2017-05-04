@@ -14,16 +14,17 @@ import numpy as np
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 
-#from sklearn.datasets import load_sample_image
 
 
 
 # 1) Get input image and labels
-# Note that I used gen_caffe_lmdb_scr.py to create a list file of each class.
+# Note that I used my own script to create a list file of each class.
 # The format of the list file goes:
-# /img_class0_dir/img_file0 0 
-# /img_class0_dir/img_file1 0
-# /img_class1_dir/img_file0 1
+# /img_class0/img_file0 0 
+# ...
+# /img_class1/img_file0 1
+# ...
+# /img_class2/img_file0 2
 # ...
 
 
@@ -60,23 +61,20 @@ for i in label:
 # Use Image to open each image and put it into numpy array.
 dataset = np.array([np.array(Image.open(fname)) for fname in img_list], dtype=np.float32)
 batch_size, height, width, channel = dataset.shape
-# image_files = mpimg.imread(filenames)
-#dataset = np.array(image_files, dtype=np.float32)
 
-
+# Convert each images (numpy array) into gray scaled images
 rgb_image_float = tf.image.convert_image_dtype(dataset, tf.float32)
 gray_dataset = tf.image.rgb_to_grayscale(rgb_image_float, name=None)
 
-# train_data = tf.reshape(gray_dataset, [-1, 256, 256, 1])
 
 
-# Parameters
+# Define learning rate, # of iterations, batch size 
 learning_rate = 0.001
 training_iters = 200000
 batch_size = 72 # There are 72 images in the training dataset
 display_step = 100 
 
-# Network Parameters
+# Define Network Hyper Parameters
 n_input = 72 
 input_width = 256
 input_height = 256
@@ -110,14 +108,17 @@ def maxpool2d(x, k=2):
 def conv_net(x, weights, biases, dropout):
     # Reshape input picture
     x = tf.reshape(x, shape=[-1, 256, 256, 1])
+
     # Convolution Layer
     conv1 = conv2d(x, weights['wc1'], biases['bc1'])
     # Max Pooling (down-sampling)
     conv1 = maxpool2d(conv1, k=2)
+
     # Convolution Layer
     conv2 = conv2d(conv1, weights['wc2'], biases['bc2'])
     # Max Pooling (down-sampling)
     conv2 = maxpool2d(conv2, k=2)
+
 #    # Convolution Layer
 #    conv3 = conv3d(conv2, weights['wc2'], biases['bc2'], data_format="channels_last")
 #    # Max Pooling (down-sampling)
@@ -172,6 +173,8 @@ biases = {
     'out': tf.Variable(tf.random_normal([n_classes]))
 }
 
+
+
 # Construct model
 pred = conv_net(x, weights, biases, keep_prob)
 
@@ -185,8 +188,6 @@ accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
 # Initializing the variables
 init = tf.global_variables_initializer()
-
-
 
 
 
@@ -220,39 +221,3 @@ with tf.Session() as sess:
 
 
 
-    # Calculate accuracy for 256 mnist test images
-#    print  "Testing Accuracy:", \
-#        sess.run(accuracy, feed_dict={x: ,
-#                                      y: ,
-#                                      keep_prob: 1.})
-
-
-
-
-
-
-
-## step 2
-#filename_queue = tf.train.string_input_producer(filenames)
-
-## step 3: read, decode and resize images
-#reader = tf.WholeFileReader()
-#filename, content = reader.read(filename_queue)
-#image = tf.image.decode_jpeg(content, channels=3)
-#image
-#image = tf.cast(image, tf.float32)
-#image
-#print("")
-#print("np shape = %s" % np.shape(image))
-
-
-
-#print(filenames[1])
-
-#tmp_img = mpimg.imread(filenames[1])
-#plt.imshow(tmp_img)
-#plt.show()
-#resized_image = tf.image.resize_images(image, 227, 227)
-
-# step 4: Batching
-#image_batch, label_batch = tf.train.batch([resized_image, label], batch_size=8)
